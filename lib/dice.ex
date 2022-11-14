@@ -13,6 +13,21 @@ defmodule Dice do
   end
 
   @doc """
+  Average dice formula
+
+  ## Examples:
+      iex> Dice.average_roll(20, 1)
+      10.5
+
+      iex> Dice.average_roll(10, 4)
+      22.0
+  """
+  def average_roll(max_face_count, num_dice)
+      when is_integer(max_face_count) and is_integer(num_dice) do
+    (max_face_count + 1) / 2 * num_dice
+  end
+
+  @doc """
   Generate a list of ability scores.
   """
   @spec ability_scores() :: list()
