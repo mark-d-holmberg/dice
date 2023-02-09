@@ -86,6 +86,9 @@ defmodule Dice.Grammar do
   # "6d(2d12)"
   @ends_with ~r/^(?<quantity>\d+)d\((?<second_die>\d+d\d+)\)$/
 
+  # "1d1+5"
+  @roll_modifier_addition_regex ~r/^\(?(?<quantity>\d+)d(?<sides>\d+)\+(?<addition>\d+)\)?$/
+
   # NOTE: these are in a specific order!
   @doc """
   All the patterns the Grammar knows
@@ -108,7 +111,8 @@ defmodule Dice.Grammar do
       {@complex_multiplier_ends_with, :complex_multiplier_ends_with},
       {@complex_regex, :complex},
       {@starts_with, :starts_with},
-      {@ends_with, :ends_with}
+      {@ends_with, :ends_with},
+      {@roll_modifier_addition_regex, :roll_modifier_addition}
     ]
   end
 

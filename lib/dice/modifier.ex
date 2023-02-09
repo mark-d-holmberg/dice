@@ -8,13 +8,15 @@ defmodule Dice.Modifier do
     :count_success,
     :keep_amount,
     :margin_success,
-    :wild_dice
+    :wild_dice,
+    :roll_modifier_addition
   ]
 
   use Dice.Matching, filters: @valid_kinds
 
   @typedoc "What kind of modifier this struct is"
-  @type modifier_kind :: :keep_highest | :keep_lowest | :count_success | :wild_dice
+  @type modifier_kind ::
+          :keep_highest | :keep_lowest | :count_success | :wild_dice | :roll_modifier_addition
 
   defstruct kind: nil, raw: nil, take: nil, operator: nil
 
@@ -111,6 +113,18 @@ defmodule Dice.Modifier do
                operator: nil
              }}
           end
+
+        :roll_modifier_addition ->
+          with %{"addition" => add_number} <-
+                 Regex.named_captures(regex, raw) do
+            {:ok,
+             %__MODULE__{
+               kind: :roll_modifier_addition,
+               raw: raw,
+               take: String.to_integer(add_number),
+               operator: nil
+             }}
+          end
       end
     else
       nil -> {:no_modifiers, raw}
@@ -178,6 +192,10 @@ defmodule Dice.Modifier do
           other ->
             {:error, "Failed to roll Margin of Success Modifier: result was: '#{inspect(other)}'"}
         end
+
+      # "1d1+5"
+      %Modifier{kind: :roll_modifier_addition, raw: _mod_raw, take: take, operator: nil} ->
+        [%Die{rolled: take, faces: 1} | rolls]
 
       _other ->
         rolls

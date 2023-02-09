@@ -19,6 +19,16 @@ defmodule Dice.ModifierTest do
       assert {:ok, %Modifier{kind: :wild_dice, raw: "1d8", take: nil, operator: nil}} =
                Modifier.scan("1d8x")
     end
+
+    test "1d1+5" do
+      assert {:ok,
+              %Modifier{
+                kind: :roll_modifier_addition,
+                raw: "1d1+5",
+                take: 5,
+                operator: nil
+              }} = Modifier.scan("1d1+5")
+    end
   end
 
   describe "take can be an integer or an expression" do

@@ -4,7 +4,7 @@ defmodule Dice.Builder do
   """
 
   # What kinds of grammar we respond to
-  @valid_kinds [:multiplier, :simple, :only_sides, :flat_value]
+  @valid_kinds [:multiplier, :simple, :only_sides, :flat_value, :roll_modifier_addition]
 
   use Dice.Matching, filters: @valid_kinds
 
@@ -86,6 +86,19 @@ defmodule Dice.Builder do
               multiplier: nil,
               raw: raw,
               quantity: 1,
+              sides: String.to_integer(reg_sides)
+            })
+          end
+
+        :roll_modifier_addition ->
+          # "1d1+5"
+          with %{"quantity" => reg_quantity, "sides" => reg_sides, "addition" => _addition} <-
+                 Regex.named_captures(regex, raw) do
+            Expression.build(%{
+              d: :d,
+              multiplier: nil,
+              raw: raw,
+              quantity: String.to_integer(reg_quantity),
               sides: String.to_integer(reg_sides)
             })
           end

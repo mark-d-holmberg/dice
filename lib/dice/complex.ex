@@ -12,7 +12,8 @@ defmodule Dice.Complex do
     :starts_with,
     :ends_with,
     :complex_multiplier_ends_with,
-    :braces_with_maybe_modifier
+    :braces_with_maybe_modifier,
+    :roll_modifier_addition
   ]
 
   use Dice.Matching, filters: @valid_regex_atoms
