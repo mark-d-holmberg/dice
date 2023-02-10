@@ -323,6 +323,36 @@ defmodule Dice.RollerTest do
       assert Enum.member?(4..5, total)
     end
   end
+
+  describe "roll/1 with subtracted modifiers" do
+    test "it can roll 1d1 - 5" do
+      assert %Result{
+               total: -4,
+               modifiers: [
+                 %Modifier{
+                   kind: :roll_modifier_subtraction,
+                   operator: nil,
+                   raw: "1d1-5",
+                   take: -5
+                 }
+               ],
+               rolls: [%Die{faces: 1, rolled: 1}]
+             } = Roller.roll("1d1-5")
+    end
+
+    test "it can roll 1d2 - 3" do
+      %Result{
+        total: total,
+        modifiers: [
+          %Modifier{kind: :roll_modifier_subtraction, operator: nil, raw: "1d2-3", take: -3}
+        ],
+        rolls: [%Die{faces: 2, rolled: rolled}]
+      } = Roller.roll("1d2-3")
+
+      assert Enum.member?(1..2, rolled)
+      assert Enum.member?(-1..-2, total)
+    end
+  end
 end
 
 # https://foundryvtt.com/article/dice-advanced/

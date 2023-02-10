@@ -89,6 +89,9 @@ defmodule Dice.Grammar do
   # "1d1+5"
   @roll_modifier_addition_regex ~r/^\(?(?<quantity>\d+)d(?<sides>\d+)\+(?<addition>\d+)\)?$/
 
+  # "1d1-5"
+  @roll_modifier_subtraction_regex ~r/^\(?(?<quantity>\d+)d(?<sides>\d+)\-(?<subtraction>\d+)\)?$/
+
   # NOTE: these are in a specific order!
   @doc """
   All the patterns the Grammar knows
@@ -112,7 +115,8 @@ defmodule Dice.Grammar do
       {@complex_regex, :complex},
       {@starts_with, :starts_with},
       {@ends_with, :ends_with},
-      {@roll_modifier_addition_regex, :roll_modifier_addition}
+      {@roll_modifier_addition_regex, :roll_modifier_addition},
+      {@roll_modifier_subtraction_regex, :roll_modifier_subtraction}
     ]
   end
 

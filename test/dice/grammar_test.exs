@@ -108,4 +108,14 @@ defmodule Dice.GrammarTest do
       assert [{_, :ends_with}] = Grammar.matching?("6d(2d12)")
     end
   end
+
+  describe "Grammar.matching?/1 outside of braces" do
+    test "roll_modifier_addition 1d1+5" do
+      assert [{_, :roll_modifier_addition}] = Grammar.matching?("1d1+5")
+    end
+
+    test "roll_modifier_subtraction 1d1-5" do
+      assert [{_, :roll_modifier_subtraction}] = Grammar.matching?("1d1-5")
+    end
+  end
 end

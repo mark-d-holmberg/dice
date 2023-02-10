@@ -9,14 +9,20 @@ defmodule Dice.Modifier do
     :keep_amount,
     :margin_success,
     :wild_dice,
-    :roll_modifier_addition
+    :roll_modifier_addition,
+    :roll_modifier_subtraction
   ]
 
   use Dice.Matching, filters: @valid_kinds
 
   @typedoc "What kind of modifier this struct is"
   @type modifier_kind ::
-          :keep_highest | :keep_lowest | :count_success | :wild_dice | :roll_modifier_addition
+          :keep_highest
+          | :keep_lowest
+          | :count_success
+          | :wild_dice
+          | :roll_modifier_addition
+          | :roll_modifier_subtraction
 
   defstruct kind: nil, raw: nil, take: nil, operator: nil
 
@@ -125,6 +131,18 @@ defmodule Dice.Modifier do
                operator: nil
              }}
           end
+
+        :roll_modifier_subtraction ->
+          with %{"subtraction" => subtract_number} <-
+                 Regex.named_captures(regex, raw) do
+            {:ok,
+             %__MODULE__{
+               kind: :roll_modifier_subtraction,
+               raw: raw,
+               take: String.to_integer("-#{subtract_number}"),
+               operator: nil
+             }}
+          end
       end
     else
       nil -> {:no_modifiers, raw}
@@ -195,6 +213,10 @@ defmodule Dice.Modifier do
 
       # "1d1+5"
       %Modifier{kind: :roll_modifier_addition, raw: _mod_raw, take: take, operator: nil} ->
+        [%Die{rolled: take, faces: 1} | rolls]
+
+      # "1d1-5"
+      %Modifier{kind: :roll_modifier_subtraction, raw: _mod_raw, take: take, operator: nil} ->
         [%Die{rolled: take, faces: 1} | rolls]
 
       _other ->

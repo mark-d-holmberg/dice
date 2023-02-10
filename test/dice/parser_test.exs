@@ -31,6 +31,19 @@ defmodule Dice.ParserTest do
                 }
               }} = Parser.parse(%Rollable{raw: "1d1+5"})
     end
+
+    test "it accepts a %Rollable{} struct with subtraction modifiers" do
+      assert {:ok,
+              %Rollable{
+                expressable: %Expression{
+                  d: :d,
+                  multiplier: nil,
+                  quantity: 1,
+                  raw: "1d1-5",
+                  sides: 1
+                }
+              }} = Parser.parse(%Rollable{raw: "1d1-5"})
+    end
   end
 
   describe "parse/1 with :complex_multiplier expressions" do
