@@ -1,6 +1,6 @@
 # Dice
 
-**TODO: Add description**
+It rolls dice.
 
 ## Installation
 

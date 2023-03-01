@@ -70,7 +70,6 @@ defmodule Dice.GrammarTest do
              ] = Grammar.matching?("{2d10, 4d8kh2, 20d6kh3}cs>15")
     end
 
-    # TODO: this is broken
     test "With keep inside of braces" do
       # "{4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3}"
       # @braces_with_maybe_modifier_regex ~r/{(?<expression>.+)}(?<modifier>kh|kl)?(?<take>\d+)?/

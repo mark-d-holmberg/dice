@@ -357,7 +357,7 @@ end
 
 # https://foundryvtt.com/article/dice-advanced/
 
-# TODO:
+# Dice.Roller.roll("{3d12}cs<=15")  (it has to be in braces)
 # /roll 3d12cs<=(@attributes.power) # CS is count-successes vs a number
 
 # Get the margin of success based on an opposed roll of 4d6.

@@ -125,7 +125,6 @@ defmodule Dice.Roller do
 
   # Calculate the rolls given the expression and modifiers
   defp calculate_expression_with_modifiers(%Expression{} = expression, %Rollable{} = r) do
-    # TODO: this is where you've messed it all up
     with rolled_result <- calculate_expression(expression),
          %Tray{items: items} <- Map.get(rolled_result, :rolls) do
       kept_rolls = apply_modifiers(items, r)

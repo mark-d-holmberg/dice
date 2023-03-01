@@ -204,7 +204,6 @@ defmodule Dice.Modifier do
         # Got roll the right side value first
         with %Result{total: target_value, rolls: _rolls} <- Roller.roll(take_rollable) do
           # _rolls is the tray for a flat value
-          # TODO: what if we kept all the dice instead of summing them?
           [%Die{rolled: target_value, faces: nil} | rolls]
         else
           other ->
