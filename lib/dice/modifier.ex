@@ -55,104 +55,115 @@ defmodule Dice.Modifier do
   @spec scan(String.t()) :: {:ok, t()} | {:no_modifiers, String.t()}
   def scan(raw) when binary_present(raw) do
     with {regex, kind} when kind in @valid_kinds <- matching?(raw) do
-      case kind do
-        :keep_amount ->
-          with %{"expression" => expression, "modifier" => mod, "take" => take} <-
-                 Regex.named_captures(regex, raw) do
-            {:ok,
-             %__MODULE__{
-               kind: determine_kind(mod),
-               raw: expression,
-               take: if(match?("", take), do: 1, else: String.to_integer(take))
-             }}
-          end
-
-        :count_success ->
-          with %{
-                 "expression" => expression,
-                 "modifier" => mod,
-                 "operator" => operator,
-                 "take" => take
-               }
-               when mod != "" <- Regex.named_captures(regex, raw) do
-            {:ok,
-             %__MODULE__{
-               kind: determine_kind(mod),
-               raw: expression,
-               take: String.to_integer(take),
-               operator: operator
-             }}
-          end
-
-        :margin_success ->
-          # 3d12ms>(4d6)
-          # {3d12, 2d10, 4d12}ms>(4d6)
-          # 3d12ms>({4d6, 3d12}kh)
-          # 3d12ms>{4d6, 3d12}kh
-          with %{
-                 "expression" => expression,
-                 "modifier" => mod,
-                 "operator" => operator,
-                 "take" => take
-               } <- Regex.named_captures(regex, raw),
-               {:ok, %Rollable{expressable: %Expression{}} = take_rollable} <-
-                 Parser.parse(take) do
-            {:ok,
-             %__MODULE__{
-               kind: determine_kind(mod),
-               raw: expression,
-               take: take_rollable,
-               operator: operator
-             }}
-          end
-
-        :wild_dice ->
-          with %{
-                 "expression" => expression,
-                 "modifier" => mod
-               } <- Regex.named_captures(regex, raw) do
-            {:ok,
-             %__MODULE__{
-               kind: determine_kind(mod),
-               raw: expression,
-               take: nil,
-               operator: nil
-             }}
-          end
-
-        :roll_modifier_addition ->
-          with %{"addition" => add_number} <-
-                 Regex.named_captures(regex, raw) do
-            {:ok,
-             %__MODULE__{
-               kind: :roll_modifier_addition,
-               raw: raw,
-               take: String.to_integer(add_number),
-               operator: nil
-             }}
-          end
-
-        :roll_modifier_subtraction ->
-          with %{"subtraction" => subtract_number} <-
-                 Regex.named_captures(regex, raw) do
-            {:ok,
-             %__MODULE__{
-               kind: :roll_modifier_subtraction,
-               raw: raw,
-               take: String.to_integer("-#{subtract_number}"),
-               operator: nil
-             }}
-          end
-      end
+      regex
+      |> Regex.named_captures(raw)
+      |> handle_regex_named_captures(raw)
     else
       nil -> {:no_modifiers, raw}
     end
   end
 
+  # :count_success
+  defp handle_regex_named_captures(
+         %{
+           "expression" => expression,
+           "modifier" => mod,
+           "operator" => operator,
+           "take" => take
+         },
+         _raw
+       )
+       when mod == "cs" do
+    {:ok,
+     %__MODULE__{
+       kind: determine_kind(mod),
+       raw: expression,
+       take: String.to_integer(take),
+       operator: operator
+     }}
+  end
+
+  # 3d12ms>(4d6)
+  # {3d12, 2d10, 4d12}ms>(4d6)
+  # 3d12ms>({4d6, 3d12}kh)
+  # 3d12ms>{4d6, 3d12}kh
+  # :margin_success
+  defp handle_regex_named_captures(
+         %{
+           "expression" => expression,
+           "modifier" => mod,
+           "operator" => operator,
+           "take" => take
+         },
+         _raw
+       )
+       when mod == "ms" do
+    with {:ok, %Rollable{expressable: %Expression{}} = take_rollable} <-
+           Parser.parse(take) do
+      {:ok,
+       %__MODULE__{
+         kind: determine_kind(mod),
+         raw: expression,
+         take: take_rollable,
+         operator: operator
+       }}
+    end
+  end
+
+  # :keep_amount
+  defp handle_regex_named_captures(
+         %{"expression" => expression, "modifier" => mod, "take" => take},
+         _raw
+       ) do
+    {:ok,
+     %__MODULE__{
+       kind: determine_kind(mod),
+       raw: expression,
+       take: if(match?("", take), do: 1, else: String.to_integer(take))
+     }}
+  end
+
+  # :wild_dice
+  defp handle_regex_named_captures(
+         %{
+           "expression" => expression,
+           "modifier" => mod
+         },
+         _raw
+       ) do
+    {:ok,
+     %__MODULE__{
+       kind: determine_kind(mod),
+       raw: expression,
+       take: nil,
+       operator: nil
+     }}
+  end
+
+  # :roll_modifier_addition
+  defp handle_regex_named_captures(%{"addition" => add_number}, raw) do
+    {:ok,
+     %__MODULE__{
+       kind: :roll_modifier_addition,
+       raw: raw,
+       take: String.to_integer(add_number),
+       operator: nil
+     }}
+  end
+
+  defp handle_regex_named_captures(%{"subtraction" => subtract_number}, raw) do
+    {:ok,
+     %__MODULE__{
+       kind: :roll_modifier_subtraction,
+       raw: raw,
+       take: String.to_integer("-#{subtract_number}"),
+       operator: nil
+     }}
+  end
+
   @doc """
   Apply the specified Modifier to a list of Rolls
   """
-
   # :keep_highest
   @spec apply_modifier(Modifier.t(), list()) :: list() | {:error, String.t()}
   def apply_modifier(%Modifier{kind: :keep_highest, take: take}, rolls) when is_list(rolls) do
