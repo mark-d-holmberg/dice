@@ -152,75 +152,102 @@ defmodule Dice.Modifier do
   @doc """
   Apply the specified Modifier to a list of Rolls
   """
+
+  # :keep_highest
   @spec apply_modifier(Modifier.t(), list()) :: list() | {:error, String.t()}
-  def apply_modifier(%Modifier{} = mod, rolls) when is_list(rolls) do
-    case mod do
-      %Modifier{kind: :wild_dice, raw: mod_raw, take: nil, operator: nil} ->
-        # Roll an additional die if this one rolled the max
-        [%Die{faces: faces, rolled: rolled}] = rolls
+  def apply_modifier(%Modifier{kind: :keep_highest, take: take}, rolls) when is_list(rolls) do
+    rolls
+    |> Enum.sort(:desc)
+    |> Enum.take(take)
+  end
 
-        if(faces == rolled) do
-          with %Result{rolls: %Tray{items: [wild_die]}} <- Roller.roll(mod_raw) do
-            [wild_die | rolls]
-          end
-        else
-          rolls
-        end
+  # :keep_lowest
+  def apply_modifier(%Modifier{kind: :keep_lowest, take: take}, rolls) when is_list(rolls) do
+    rolls
+    |> Enum.sort(:asc)
+    |> Enum.take(take)
+  end
 
-      %Modifier{kind: :keep_highest, take: take} ->
+  # "{1d4, 2d8, 3d6}cs>2d4" Will match with a take of 2
+  # NOTE: The 'take' is meant to be a flat value like '10'
+  # NOTE: "{1d4, 2d8, 3d6}cs>(2d4)" does NOT match!
+  # :count_success
+  def apply_modifier(%Modifier{kind: :count_success, take: take, operator: operator}, rolls)
+      when is_list(rolls) do
+    rolls
+    |> Enum.filter(fn x ->
+      case operator do
+        "<" -> x.total < take
+        "<=" -> x.total <= take
+        "=" -> x.total == take
+        ">=" -> x.total >= take
+        ">" -> x.total > take
+      end
+    end)
+  end
+
+  # :margin_success
+  def apply_modifier(
+        %Modifier{kind: :margin_success, take: %Rollable{} = take_rollable, operator: _operator},
         rolls
-        |> Enum.sort(:desc)
-        |> Enum.take(take)
+      )
+      when is_list(rolls) do
+    # NOTE: this ain't right yet.
 
-      %Modifier{kind: :keep_lowest, take: take} ->
-        rolls
-        |> Enum.sort(:asc)
-        |> Enum.take(take)
+    # Get the margin of success based on an opposed roll of 4d6.
+    # This modifier subtracts a target value set by the user from the result of the dice rolled, and returns the difference
+    # as the final total. If the amount rolled is less than the target it outputs a negative number, and a positive number
+    # if there is a remainder after the subtraction.
+    # /roll 3d12ms>(4d6)
 
-      # "{1d4, 2d8, 3d6}cs>2d4" Will match with a take of 2
-      # NOTE: The 'take' is meant to be a flat value like '10'
-      # NOTE: "{1d4, 2d8, 3d6}cs>(2d4)" does NOT match!
-      %Modifier{kind: :count_success, take: take, operator: operator} ->
-        rolls
-        |> Enum.filter(fn x ->
-          case operator do
-            "<" -> x.total < take
-            "<=" -> x.total <= take
-            "=" -> x.total == take
-            ">=" -> x.total >= take
-            ">" -> x.total > take
-          end
-        end)
-
-      %Modifier{kind: :margin_success, take: %Rollable{} = take_rollable, operator: _operator} ->
-        # NOTE: this ain't right yet.
-
-        # Get the margin of success based on an opposed roll of 4d6.
-        # This modifier subtracts a target value set by the user from the result of the dice rolled, and returns the difference
-        # as the final total. If the amount rolled is less than the target it outputs a negative number, and a positive number
-        # if there is a remainder after the subtraction.
-        # /roll 3d12ms>(4d6)
-
-        # Got roll the right side value first
-        with %Result{total: target_value, rolls: _rolls} <- Roller.roll(take_rollable) do
-          # _rolls is the tray for a flat value
-          [%Die{rolled: target_value, faces: nil} | rolls]
-        else
-          other ->
-            {:error, "Failed to roll Margin of Success Modifier: result was: '#{inspect(other)}'"}
-        end
-
-      # "1d1+5"
-      %Modifier{kind: :roll_modifier_addition, raw: _mod_raw, take: take, operator: nil} ->
-        [%Die{rolled: take, faces: 1} | rolls]
-
-      # "1d1-5"
-      %Modifier{kind: :roll_modifier_subtraction, raw: _mod_raw, take: take, operator: nil} ->
-        [%Die{rolled: take, faces: 1} | rolls]
-
-      _other ->
-        rolls
+    # Got roll the right side value first
+    with %Result{total: target_value, rolls: _rolls} <- Roller.roll(take_rollable) do
+      # _rolls is the tray for a flat value
+      [%Die{rolled: target_value, faces: nil} | rolls]
+    else
+      other ->
+        {:error, "Failed to roll Margin of Success Modifier: result was: '#{inspect(other)}'"}
     end
+  end
+
+  # :wild_dice
+  def apply_modifier(%Modifier{kind: :wild_dice, raw: mod_raw, take: nil, operator: nil}, rolls)
+      when is_list(rolls) do
+    # Roll an additional die if this one rolled the max
+    [%Die{faces: faces, rolled: rolled}] = rolls
+
+    if(faces == rolled) do
+      with %Result{rolls: %Tray{items: [wild_die]}} <- Roller.roll(mod_raw) do
+        [wild_die | rolls]
+      end
+    else
+      rolls
+    end
+  end
+
+  # "1d1-5"
+  # :roll_modifier_subtraction
+  def apply_modifier(
+        %Modifier{kind: :roll_modifier_subtraction, raw: _mod_raw, take: take, operator: nil},
+        rolls
+      )
+      when is_list(rolls) do
+    [%Die{rolled: take, faces: 1} | rolls]
+  end
+
+  # "1d1+5"
+  # :roll_modifier_addition
+  def apply_modifier(
+        %Modifier{kind: :roll_modifier_addition, raw: _mod_raw, take: take, operator: nil},
+        rolls
+      )
+      when is_list(rolls) do
+    [%Die{rolled: take, faces: 1} | rolls]
+  end
+
+  # fallback
+  def apply_modifier(_, rolls) when is_list(rolls) do
+    rolls
   end
 
   # What kind of thing are you?
