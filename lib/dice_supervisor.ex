@@ -7,6 +7,7 @@ defmodule Dice.DiceSupervisor do
   use Supervisor
 
   def start_link(init_arg) do
+    IO.puts("[DiceSupervisor.start_link]")
     Supervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 

@@ -46,94 +46,110 @@ defmodule Dice.Builder do
   """
   def guess(raw) when binary_present(raw) do
     with {regex, kind} when kind in @valid_kinds <- matching?(raw) do
-      case kind do
-        # "10"
-        :flat_value ->
-          with %{"flat_value" => flat_value} <- Regex.named_captures(regex, raw) do
-            Expression.build(%{
-              d: :d,
-              flat_value: String.to_integer(flat_value),
-              multiplier: nil,
-              raw: raw
-            })
-          end
-
-        # 1d4*2
-        :multiplier ->
-          with %{"quantity" => reg_quantity, "sides" => reg_sides, "multiplier" => reg_multi} <-
-                 Regex.named_captures(regex, raw) do
-            Expression.build(%{
-              d: :d,
-              multiplier: String.to_integer(reg_multi),
-              raw: raw,
-              quantity: String.to_integer(reg_quantity),
-              sides: String.to_integer(reg_sides)
-            })
-          end
-
-        :simple ->
-          # "1d4", "2d20", "20d20"
-          with %{"quantity" => reg_quantity, "sides" => reg_sides} <-
-                 Regex.named_captures(regex, raw) do
-            Expression.build(%{
-              d: :d,
-              multiplier: nil,
-              raw: raw,
-              quantity: String.to_integer(reg_quantity),
-              sides: String.to_integer(reg_sides)
-            })
-          end
-
-        :only_sides ->
-          with %{"sides" => reg_sides} <- Regex.named_captures(regex, raw) do
-            # "d20"
-            # quantity is assumed as 1
-            Expression.build(%{
-              d: :d,
-              multiplier: nil,
-              raw: raw,
-              quantity: 1,
-              sides: String.to_integer(reg_sides)
-            })
-          end
-
-        :roll_modifier_addition ->
-          # "1d1+5"
-          with %{"quantity" => reg_quantity, "sides" => reg_sides, "addition" => _addition} <-
-                 Regex.named_captures(regex, raw) do
-            Expression.build(%{
-              d: :d,
-              multiplier: nil,
-              raw: raw,
-              quantity: String.to_integer(reg_quantity),
-              sides: String.to_integer(reg_sides)
-            })
-          end
-
-        :roll_modifier_subtraction ->
-          # "1d1-5"
-          with %{"quantity" => reg_quantity, "sides" => reg_sides, "subtraction" => _subtraction} <-
-                 Regex.named_captures(regex, raw) do
-            Expression.build(%{
-              d: :d,
-              multiplier: nil,
-              raw: raw,
-              quantity: String.to_integer(reg_quantity),
-              sides: String.to_integer(reg_sides)
-            })
-          end
-      end
+      regex
+      |> Regex.named_captures(raw)
+      |> handle_regex_named_captures(raw)
     else
       _complex ->
-        # Complex
-        {:ok,
-         %__MODULE__{
-           type: :complex,
-           raw: raw,
-           quantity_expression: %Expression{raw: ""},
-           sides_expression: %Expression{raw: ""}
-         }}
+        guess_complex_from_raw(raw)
     end
+  end
+
+  # "10"
+  # :flat_value
+  defp handle_regex_named_captures(%{"flat_value" => flat_value}, raw) do
+    Expression.build(%{
+      d: :d,
+      flat_value: String.to_integer(flat_value),
+      multiplier: nil,
+      raw: raw
+    })
+  end
+
+  # "1d4*2"
+  # :multiplier
+  defp handle_regex_named_captures(
+         %{"quantity" => reg_quantity, "sides" => reg_sides, "multiplier" => reg_multi},
+         raw
+       ) do
+    Expression.build(%{
+      d: :d,
+      multiplier: String.to_integer(reg_multi),
+      raw: raw,
+      quantity: String.to_integer(reg_quantity),
+      sides: String.to_integer(reg_sides)
+    })
+  end
+
+  # "1d4", "2d20", "20d20"
+  # :simple
+  defp handle_regex_named_captures(%{"quantity" => reg_quantity, "sides" => reg_sides}, raw) do
+    Expression.build(%{
+      d: :d,
+      multiplier: nil,
+      raw: raw,
+      quantity: String.to_integer(reg_quantity),
+      sides: String.to_integer(reg_sides)
+    })
+  end
+
+  # "d20"
+  # :only_sides
+  defp handle_regex_named_captures(%{"sides" => reg_sides}, raw) do
+    Expression.build(%{
+      d: :d,
+      multiplier: nil,
+      raw: raw,
+      quantity: 1,
+      sides: String.to_integer(reg_sides)
+    })
+  end
+
+  # "1d1+5"
+  # :roll_modifier_addition
+  defp handle_regex_named_captures(
+         %{"quantity" => reg_quantity, "sides" => reg_sides, "addition" => _addition},
+         raw
+       ) do
+    Expression.build(%{
+      d: :d,
+      multiplier: nil,
+      raw: raw,
+      quantity: String.to_integer(reg_quantity),
+      sides: String.to_integer(reg_sides)
+    })
+  end
+
+  # "1d1-5"
+  # :roll_modifier_subtraction
+  defp handle_regex_named_captures(
+         %{"quantity" => reg_quantity, "sides" => reg_sides, "subtraction" => _subtraction},
+         raw
+       ) do
+    Expression.build(%{
+      d: :d,
+      multiplier: nil,
+      raw: raw,
+      quantity: String.to_integer(reg_quantity),
+      sides: String.to_integer(reg_sides)
+    })
+  end
+
+  # WTF?
+  defp handle_regex_named_captures(_other, _raw) do
+    :error
+  end
+
+  # Uses Expressions for quantity/sides
+  defp guess_complex_from_raw(raw) do
+    # Complex
+    {:ok,
+     %__MODULE__{
+       type: :complex,
+       raw: raw,
+       quantity_expression: %Expression{raw: ""},
+       sides_expression: %Expression{raw: ""}
+     }}
   end
 
   # Convenience method
