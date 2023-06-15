@@ -54,7 +54,8 @@ defmodule Dice.Grammar do
   #   :starts_with,
   #   :ends_with,
   #   :complex_multiplier_ends_with,
-  #   :braces_with_maybe_modifier_regex
+  #   :braces_with_maybe_modifier_regex,
+  #   :braces_no_outer_modifiers
   # ]
 
   # Complex::
@@ -67,9 +68,12 @@ defmodule Dice.Grammar do
   # {2d10, 4d8kh2, 20d6kh3}cs=15
   @count_success_required_braces ~r/{(?<expression>.+)}(?<modifier>cs)?(?<operator>>|>=|<=|<|=)?(?<take>\d+)$/
 
+  # {4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3}
+  @braces_no_outer_modifiers ~r/{(?<expression>.+)}$/
+
   # NOTE: conflicts with @keep_regex
   # "{4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3, 4d6kh3}"
-  @braces_with_maybe_modifier_regex ~r/{(?<expression>.+)}(?<modifier>kh|kl)?(?<take>\d+)?/
+  @braces_with_maybe_modifier_regex ~r/{(?<expression>.+)}(?<modifier>kh|kl)(?<take>[^>|>=|<=|<|=]?\d*?$)/
 
   # "(1d20*2)d(1d10)"
   @complex_quantity_multiplier_regex ~r/^\(?(?<first_die>\d+d\d+\*(?<multiplier>\d+))\)?d\(?(?<second_die>\d+d\d+)\)?$/
@@ -104,6 +108,7 @@ defmodule Dice.Grammar do
       {@wild_dice_regex, :wild_dice},
 
       # These two conflict
+      {@braces_no_outer_modifiers, :braces_no_outer_modifiers},
       {@braces_with_maybe_modifier_regex, :braces_with_maybe_modifier},
       {@keep_regex, :keep_amount},
       {@multiplier_regex, :multiplier},

@@ -113,10 +113,10 @@ defmodule Dice.BracesTest do
               }} = Braces.handle_braces({regex, kind}, "{6d6, 5d8, 4d10, 3d12}cs>15")
     end
 
-    test "braces_with_maybe_modifier inside only" do
+    test "braces_no_outer_modifiers inside only" do
       {regex, kind} =
         Dice.Grammar.all_patterns()
-        |> Enum.find(fn {_x, y} -> y == :braces_with_maybe_modifier end)
+        |> Enum.find(fn {_x, y} -> y == :braces_no_outer_modifiers end)
 
       assert [
                %Dice.Rollable{

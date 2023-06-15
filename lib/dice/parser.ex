@@ -19,7 +19,8 @@ defmodule Dice.Parser do
   def parse(%Rollable{raw: raw, modifiers: []} = rollable) when binary_present(raw) do
     case Complex.matching?(raw) do
       # Braces
-      {regex, kind} when kind in [:count_success, :braces_with_maybe_modifier] ->
+      {regex, kind}
+      when kind in [:count_success, :braces_with_maybe_modifier, :braces_no_outer_modifiers] ->
         Braces.handle_braces({regex, kind}, raw)
 
       _not_braces ->

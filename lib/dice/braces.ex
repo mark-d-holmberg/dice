@@ -4,7 +4,7 @@ defmodule Dice.Braces do
   """
   use Dice.ContextClient
 
-  @valid_kinds ~w(count_success braces_with_maybe_modifier)a
+  @valid_kinds ~w(count_success braces_with_maybe_modifier braces_no_outer_modifiers)a
 
   # Async parsing of braces
   @doc """
@@ -53,22 +53,20 @@ defmodule Dice.Braces do
             end
         end
 
-      {_, :braces_with_maybe_modifier} ->
+      {_, :braces_no_outer_modifiers} ->
         case Regex.named_captures(regex, raw) do
-          %{
-            "expression" => braces_string,
-            "modifier" => "",
-            "take" => ""
-          } ->
-            # "{2d10kh2}"
-            # iex(16)> Parser.parse("{2d10, 4d8kh2, 20d6kh3}")
+          %{"expression" => braces_string} ->
+            # "2d10, 4d8kh2, 20d6kh3"
             with %Task{} = task <- expressions_from_braces(braces_string),
                  [%Rollable{} | _rest] = expressions <- Task.await(task) do
               expressions
             else
               other -> {:error, inspect(other)}
             end
+        end
 
+      {_, :braces_with_maybe_modifier} ->
+        case Regex.named_captures(regex, raw) do
           %{
             "expression" => braces_string,
             "modifier" => _mod,
