@@ -210,8 +210,12 @@ defmodule Dice.BracesTest do
                   raw: "20d6"
                 }
               ],
-              %Dice.Modifier{kind: :keep_highest, operator: nil, raw: "2d10, 4d8", take: 2}} =
-               Braces.handle_braces({regex, kind}, "{2d10, 4d8kh2, 20d6kh3}kh2")
+              %Dice.Modifier{
+                kind: :keep_highest,
+                operator: nil,
+                raw: "2d10, 4d8kh2, 20d6kh3",
+                take: 2
+              }} = Braces.handle_braces({regex, kind}, "{2d10, 4d8kh2, 20d6kh3}kh2")
     end
   end
 end

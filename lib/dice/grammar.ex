@@ -13,10 +13,7 @@ defmodule Dice.Grammar do
   # ]
 
   # "2d20kh"
-  @keep_regex ~r/\{?(?<expression>.+?)\}?(?<modifier>(kh|kl))(?<take>\d+)?/
-
-  # "{1d4, 3d8}cs>5"
-  # @count_success_optional_braces_regex ~r/\{?(?<expression>.+[^\}])\}?(?<modifier>(cs))(?<operator>>|>=|<=|<|=)?(?<take>\d+)/
+  @keep_regex ~r/\{?(?<expression>.+?)\}?(?<modifier>(kh|kl))(?<take>[^>|>=|<=|<|=]?\d+?)?\}?$/
 
   # "{1d4, 3d8}ms>(2d8)"
   @margin_success_regex ~r/\{?(?<expression>.+[^\}])\}?(?<modifier>(ms))(?<operator>>|>=|<=|<|=)(?<take>.+)/

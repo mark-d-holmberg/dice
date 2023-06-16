@@ -52,8 +52,7 @@ defmodule Dice.GrammarTest do
       # {2d10, 4d8kh2, 20d6kh3}cs<=15
       # {2d10, 4d8kh2, 20d6kh3}cs>=15
       # {2d10, 4d8kh2, 20d6kh3}cs=15
-      assert [{_, :count_success}, {_, :keep_amount}] =
-               Grammar.matching?("{2d10, 4d8kh2, 20d6kh3}cs>15")
+      assert [{_, :count_success}] = Grammar.matching?("{2d10, 4d8kh2, 20d6kh3}cs>15")
     end
 
     test "With keep inside of braces" do
