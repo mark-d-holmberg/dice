@@ -6,16 +6,16 @@ defmodule Dice.DiceSupervisor do
   # Automatically defines child_spec/1
   use Supervisor
 
-  def start_link(init_arg) do
-    IO.puts("[DiceSupervisor.start_link]")
-    Supervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
+  def start_link(opts) do
+    IO.puts("[DiceSupervisor.start_link], opts was: #{inspect(opts)}")
+    Supervisor.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   # NOTE: this can "supervise" many different TYPES of tasks... Rolling, Calculating modifiers, etc...
   @impl true
-  def init(_init_arg) do
+  def init(opts) do
     children = [
-      {Dice.Tasks.RollTask, [:hello]}
+      {Dice.Tasks.RollTask, Keyword.get(opts, :max, 18)}
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

@@ -10,7 +10,7 @@ defmodule Dice.Application do
     children = [
       # Starts a worker by calling: Dice.Worker.start_link(arg)
       # {Dice.Worker, arg}
-      {Task.Supervisor, name: DiceSupervisor}
+      {Dice.DiceSupervisor, name: DiceSupervisor}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
